@@ -7,6 +7,7 @@ import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
 import java.time.temporal.TemporalAccessor;
+import java.util.ArrayList;
 import java.util.Locale;
 
 /**
@@ -49,5 +50,16 @@ public class FormatUtil {
      */
     public static String toRFC3339Format(ZonedDateTime zonedDateTime) {
         return DateTimeFormatter.ISO_OFFSET_DATE_TIME.format(zonedDateTime);
+    }
+
+    public static String toCommaSeperatedString(ArrayList<String> stringsAsArrayList) {
+        String commaSeparatedList = stringsAsArrayList.toString();
+
+        commaSeparatedList
+                = commaSeparatedList.replace("[", "")
+                .replace("]", "")
+                .replace(" ", "");
+
+        return commaSeparatedList;
     }
 }

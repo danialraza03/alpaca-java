@@ -1,0 +1,34 @@
+{
+  "type": "object",
+  "extends": {
+    "existingJavaType": "net.jacobpeterson.alpaca.model.endpoint.marketdata.common.realtime.news.NewsMessage"
+  },
+  "title": "See <a href=\"https://alpaca.markets/docs/api-documentation/api-v2/market-data/alpaca-data-api-v2/real-time/\">Realtime Stock Market Data</a>.",
+  "properties": {
+    "url": {
+      "existingJavaType": "java.lang.String",
+      "javaName": "url",
+      "title": "News URL."
+    },
+    "headline": {
+      "existingJavaType": "java.lang.String",
+      "javaName": "headline",
+      "title": "News Headline."
+    },
+    "author": {
+      "existingJavaType": "java.lang.String",
+      "javaName": "author",
+      "title": "News Author."
+    },
+    "summary": {
+      "existingJavaType": "java.lang.String",
+      "javaName": "summary",
+      "title": "News Summary."
+    },
+    "content": {
+      "existingJavaType": "java.lang.String",
+      "javaName": "content",
+      "title": "News Content."
+    }
+  }
+}

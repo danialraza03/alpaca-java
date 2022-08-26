@@ -1,0 +1,38 @@
+{
+  "type": "object",
+  "extends": {
+    "existingJavaType": "net.jacobpeterson.alpaca.model.endpoint.marketdata.common.historical.news.News"
+  },
+  "title": "See <a href=\"https://alpaca.markets/docs/api-documentation/api-v2/market-data/alpaca-data-api-v2/historical/\">Historical Stock Data</a>.",
+  "properties": {
+    "url": {
+      "existingJavaType": "java.lang.String",
+      "javaName": "url",
+      "title": "News URL."
+    },
+    "headline": {
+      "existingJavaType": "java.lang.String",
+      "javaName": "headline",
+      "title": "News Headline."
+    },
+    "author": {
+      "existingJavaType": "java.lang.String",
+      "javaName": "author",
+      "title": "News Author."
+    },
+    "summary": {
+      "existingJavaType": "java.lang.String",
+      "javaName": "summary",
+      "title": "News Summary."
+    },
+    "content": {
+      "existingJavaType": "java.lang.String",
+      "javaName": "content",
+      "title": "News Content."
+    },
+    "images": {
+      "existingJavaType": "java.util.ArrayList<net.jacobpeterson.alpaca.model.endpoint.common.Image>",
+      "title": "The {@link java.util.ArrayList} of {@link net.jacobpeterson.alpaca.model.endpoint.common.Image}s."
+    }
+  }
+}

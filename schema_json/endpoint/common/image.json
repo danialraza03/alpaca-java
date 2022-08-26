@@ -1,0 +1,16 @@
+{
+  "type": "object",
+  "title": "See <a href=\"https://alpaca.markets/docs/api-references/market-data-api/news-data/historical/\">News Data Image Attribute</a>.",
+  "properties": {
+    "size": {
+      "existingJavaType": "java.lang.String",
+      "javaName": "size",
+      "title": "Image Size."
+    },
+    "url": {
+      "existingJavaType": "java.lang.String",
+      "javaName": "url",
+      "title": "Image URL."
+    }
+  }
+}

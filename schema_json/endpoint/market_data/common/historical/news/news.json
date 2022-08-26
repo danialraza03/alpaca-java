@@ -1,0 +1,31 @@
+{
+  "type": "object",
+  "title": "See <a href=\"https://alpaca.markets/docs/api-documentation/api-v2/market-data/\">Market Data</a>.",
+  "properties": {
+    "id": {
+      "existingJavaType": "java.lang.Integer",
+      "javaName": "newsID",
+      "title": "News ID."
+    },
+    "source": {
+      "existingJavaType": "java.lang.String",
+      "javaName": "source",
+      "title": "News Source."
+    },
+    "created_at": {
+      "existingJavaType": "java.time.ZonedDateTime",
+      "javaName": "creation_date",
+      "title": "Creation Timestamp with nanosecond precision."
+    },
+    "updated_at": {
+      "existingJavaType": "java.time.ZonedDateTime",
+      "javaName": "update_date",
+      "title": "Update Timestamp with nanosecond precision."
+    },
+    "symbols": {
+      "existingJavaType": "java.util.ArrayList<String>",
+      "javaName": "symbols",
+      "title": "The {@link java.util.ArrayList} of symbols related to news."
+    }
+  }
+}

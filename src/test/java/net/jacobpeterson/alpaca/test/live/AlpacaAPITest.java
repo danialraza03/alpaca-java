@@ -11,6 +11,13 @@ import net.jacobpeterson.alpaca.model.endpoint.accountconfiguration.enums.DTBPCh
 import net.jacobpeterson.alpaca.model.endpoint.accountconfiguration.enums.TradeConfirmEmail;
 import net.jacobpeterson.alpaca.model.endpoint.clock.Clock;
 import net.jacobpeterson.alpaca.model.endpoint.common.enums.SortDirection;
+import net.jacobpeterson.alpaca.model.endpoint.marketdata.common.realtime.enums.MarketDataMessageType;
+import net.jacobpeterson.alpaca.model.endpoint.marketdata.stock.historical.news.StockNews;
+import net.jacobpeterson.alpaca.model.endpoint.marketdata.stock.historical.news.StockNewsResponse;
+import net.jacobpeterson.alpaca.model.endpoint.marketdata.stock.historical.trade.StockTrade;
+import net.jacobpeterson.alpaca.model.endpoint.marketdata.stock.historical.trade.StockTradesResponse;
+import net.jacobpeterson.alpaca.model.endpoint.marketdata.stock.realtime.news.StockNewsMessage;
+import net.jacobpeterson.alpaca.model.endpoint.marketdata.stock.realtime.trade.StockTradeMessage;
 import net.jacobpeterson.alpaca.model.endpoint.orders.Order;
 import net.jacobpeterson.alpaca.model.endpoint.orders.enums.CurrentOrderStatus;
 import net.jacobpeterson.alpaca.rest.AlpacaClientException;
@@ -19,6 +26,7 @@ import net.jacobpeterson.alpaca.rest.endpoint.accountactivities.AccountActivitie
 import net.jacobpeterson.alpaca.rest.endpoint.accountconfiguration.AccountConfigurationEndpoint;
 import net.jacobpeterson.alpaca.rest.endpoint.clock.ClockEndpoint;
 import net.jacobpeterson.alpaca.rest.endpoint.orders.OrdersEndpoint;
+import net.jacobpeterson.alpaca.websocket.marketdata.MarketDataListener;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
@@ -28,12 +36,17 @@ import org.junit.jupiter.api.TestMethodOrder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.time.ZoneId;
 import java.time.ZonedDateTime;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assertions.fail;
 
 /**
@@ -284,5 +297,149 @@ public class AlpacaAPITest {
         assertNotNull(order.getTimeInForce());
         assertNotNull(order.getStatus());
         assertNotNull(order.getExtendedHours());
+    }
+
+    @Test
+    public void testStockMarketDataEndpointGetOneTradeExistsUntilNow() throws AlpacaClientException {
+        StockTradesResponse aaplTradesResponse = alpacaAPI.stockMarketData().getTrades(
+                "AAPL",
+                ZonedDateTime.of(2021, 7, 8, 9, 30, 0, 0, ZoneId.of("America/New_York")),
+                ZonedDateTime.of(2021, 7, 8, 9, 31, 0, 0, ZoneId.of("America/New_York")),
+                1,
+                null);
+
+        List<StockTrade> trades = aaplTradesResponse.getTrades();
+
+        assertNotNull(trades);
+        assertFalse(trades.isEmpty());
+
+        trades.forEach(trade -> LOGGER.debug("{}", trade));
+
+        // Assert required fields are present
+        StockTrade trade = trades.get(0);
+        assertNotNull(trade.getTradeID());
+        assertNotNull(trade.getTimestamp());
+        assertNotNull(trade.getPrice());
+        assertNotNull(trade.getExchange());
+        assertNotNull(trade.getSize());
+        assertNotNull(trade.getConditions());
+        assertNotNull(trade.getTape());
+    }
+
+    @Test
+    public void testStockMarketNewsEndpointGetOneNewsExistsUntilNow() throws AlpacaClientException {
+        StockNewsResponse aaplNewsResponse = alpacaAPI.stockMarketNews().getNews(
+                new ArrayList<String>(Arrays.asList("AAPL")),
+                ZonedDateTime.of(2020, 7, 8, 9, 30, 0, 0, ZoneId.of("America/New_York")),
+                ZonedDateTime.of(2021, 7, 8, 9, 31, 0, 0, ZoneId.of("America/New_York")),
+                1,
+                null);
+
+        List<StockNews> allNews = aaplNewsResponse.getNews();
+
+        assertNotNull(allNews);
+        assertFalse(allNews.isEmpty());
+
+        allNews.forEach(news -> LOGGER.debug("{}", news));
+
+        // Assert required fields are present
+        StockNews news = allNews.get(0);
+        assertNotNull(news.getNewsID());
+        assertNotNull(news.getCreationDate());
+        assertNotNull(news.getAuthor());
+        assertNotNull(news.getContent());
+        assertNotNull(news.getHeadline());
+        assertNotNull(news.getSummary());
+        assertNotNull(news.getSymbols());
+        assertNotNull(news.getSource());
+        assertNotNull(news.getUpdateDate());
+        assertNotNull(news.getUrl());
+        assertNotNull(news.getImages());
+    }
+
+    @Test
+    public void testStockMarketDataWebsocketStayConnected5SecondsGetTradeUpdates() throws AlpacaClientException {
+        MarketDataListener marketDataListener = (messageType, message) ->
+        {
+            if (messageType.name() == "TRADE") {
+                StockTradeMessage trade = (StockTradeMessage) message;
+                assertNotNull(trade.getTradeID());
+                assertNotNull(trade.getTimestamp());
+                assertNotNull(trade.getPrice());
+                assertNotNull(trade.getExchange());
+                assertNotNull(trade.getSize());
+                assertNotNull(trade.getConditions());
+                assertNotNull(trade.getTape());
+            } else {
+                LOGGER.debug("{}: {}", messageType.name(), message);
+            }
+        };
+        alpacaAPI.stockMarketDataStreaming().setListener(marketDataListener);
+
+        alpacaAPI.stockMarketDataStreaming().subscribeToControl(
+                MarketDataMessageType.SUCCESS,
+                MarketDataMessageType.SUBSCRIPTION,
+                MarketDataMessageType.ERROR);
+
+        alpacaAPI.stockMarketDataStreaming().connect();
+        alpacaAPI.stockMarketDataStreaming().waitForAuthorization(5, TimeUnit.SECONDS);
+
+        assertTrue(alpacaAPI.stockMarketDataStreaming().isValid());
+
+        alpacaAPI.stockMarketDataStreaming().subscribe(
+                Arrays.asList("*"),
+                null,
+                null);
+
+        try {
+            Thread.sleep(5000);
+        } catch (InterruptedException e) {
+            throw new RuntimeException(e);
+        }
+
+        alpacaAPI.stockMarketDataStreaming().disconnect();
+    }
+
+    @Test
+    public void testStockMarketNewsWebsocketStayConnected5Seconds() throws AlpacaClientException {
+        MarketDataListener marketDataListener = (messageType, message) ->
+        {
+            if (messageType.name() == "NEWS") {
+                StockNewsMessage news = (StockNewsMessage) message;
+                assertNotNull(news.getNewsID());
+                assertNotNull(news.getCreationDate());
+                assertNotNull(news.getAuthor());
+                assertNotNull(news.getContent());
+                assertNotNull(news.getHeadline());
+                assertNotNull(news.getSummary());
+                assertNotNull(news.getSymbols());
+                assertNotNull(news.getSource());
+                assertNotNull(news.getUpdateDate());
+                assertNotNull(news.getUrl());
+            } else {
+                LOGGER.debug("{}: {}", messageType.name(), message);
+            }
+        };
+        alpacaAPI.stockMarketNewsStreaming().setListener(marketDataListener);
+
+        alpacaAPI.stockMarketNewsStreaming().subscribeToControl(
+                MarketDataMessageType.SUCCESS,
+                MarketDataMessageType.SUBSCRIPTION,
+                MarketDataMessageType.ERROR);
+
+        alpacaAPI.stockMarketNewsStreaming().connect();
+        alpacaAPI.stockMarketNewsStreaming().waitForAuthorization(5, TimeUnit.SECONDS);
+
+        assertTrue(alpacaAPI.stockMarketNewsStreaming().isValid());
+
+        alpacaAPI.stockMarketNewsStreaming().subscribe(Arrays.asList("*"));
+
+        try {
+            Thread.sleep(5000);
+        } catch (InterruptedException e) {
+            throw new RuntimeException(e);
+        }
+
+        alpacaAPI.stockMarketNewsStreaming().disconnect();
     }
 }
